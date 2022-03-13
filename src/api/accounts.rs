@@ -14,7 +14,7 @@ impl Accounts {
     /// # Arguments
     /// * `ctx` - context instance
     /// * `address` - target wallet or contract address to get list of normal transactions
-    pub fn get_list_normal_transactions(&self, ctx: &Context, address: &str) -> Result<Vec::<BSCNormalTransactionResponseSuccessVariantResult>, AppError>
+    pub fn get_list_normal_transactions(&self, ctx: &Context, address: &str) -> Result<Vec::<BSCNormalTransactionResponseSuccessVariantResult>, BscError>
     {
         type ResultType = BSCNormalTransactionResponseSuccessVariantResult;
         type JsonType = BSCTransactionResponse::<ResultType>;
@@ -27,7 +27,7 @@ impl Accounts {
     /// # Arguments
     /// * `ctx` - context instance
     /// * `address` - target wallet or contract address to get list of internal transactions
-    pub fn get_list_internal_transactions(&self, ctx: &Context, address: &str) -> Result<Vec::<BSCInternalTransactionResponseSuccessVariantResult>, AppError>
+    pub fn get_list_internal_transactions(&self, ctx: &Context, address: &str) -> Result<Vec::<BSCInternalTransactionResponseSuccessVariantResult>, BscError>
     {
         type ResultType = BSCInternalTransactionResponseSuccessVariantResult;
         type JsonType = BSCTransactionResponse::<ResultType>;
@@ -42,7 +42,7 @@ impl Accounts {
     /// 10,000 transactions per-se page * offset must be less than or equal to 10,000.
     /// So it doesn't make sense to use this API for address which has more than
     /// 10,000 transactions.
-    fn get_list_transactions<R, J>(&self, ctx: &Context, api_req_type: BSCApiResponseType, address: &str) -> Result<Vec::<R>, AppError>
+    fn get_list_transactions<R, J>(&self, ctx: &Context, api_req_type: BSCApiResponseType, address: &str) -> Result<Vec::<R>, BscError>
     where
         R: serde::de::DeserializeOwned,
         J: CompatibleTransactionResponse::<R> + serde::de::DeserializeOwned
@@ -76,14 +76,14 @@ impl Accounts {
 
             let url = Url::parse(&raw_url_str);
             if let Err(_) = url {
-                return Err(AppError::ErrorInternalUrlParsing);
+                return Err(BscError::ErrorInternalUrlParsing);
             }
 
             match isahc::get(url.unwrap().as_str()) {
                 Ok(mut res) => {
                     // early return for non-200 HTTP returned code
                     if res.status() != 200 {
-                        return Err(AppError::ErrorApiResponse(format!("Error API resonse, with HTTP {code} returned", code=res.status().as_str())));
+                        return Err(BscError::ErrorApiResponse(format!("Error API resonse, with HTTP {code} returned", code=res.status().as_str())));
                     }
 
                     // use the commented line, or just use what isahc provides conveniently
@@ -109,10 +109,10 @@ impl Accounts {
                                     GenericBSCTransactionResponseResult::Failed(msg_opt) => {
                                         match msg_opt {
                                             Some(msg) => {
-                                                return Err(AppError::ErrorApiResponse(format!("un-expected error for success case ({msg})", msg=msg)));
+                                                return Err(BscError::ErrorApiResponse(format!("un-expected error for success case ({msg})", msg=msg)));
                                             },
                                             None => {
-                                                return Err(AppError::ErrorApiResponse(format!("un-expected error for success case")));
+                                                return Err(BscError::ErrorApiResponse(format!("un-expected error for success case")));
                                             }
                                         }
                                     }
@@ -124,18 +124,18 @@ impl Accounts {
                                     break;
                                 }
                                 else {
-                                    return Err(AppError::ErrorApiResponse(format!("'{message}'", message=json.message())));
+                                    return Err(BscError::ErrorApiResponse(format!("'{message}'", message=json.message())));
                                 }
                             }
                         },
                         Err(e) => {
                             eprintln!("{:?}", e);
-                            return Err(AppError::ErrorJsonParsing(None));
+                            return Err(BscError::ErrorJsonParsing(None));
                         }
                     }
                 },
                 Err(_) => {
-                    return Err(AppError::ErrorSendingHttpRequest);
+                    return Err(BscError::ErrorSendingHttpRequest);
                 }
             }
 
@@ -155,19 +155,19 @@ impl Accounts {
     /// # Arguments
     /// * `ctx` - context instance
     /// * `address` - target wallet or contract address to get balance of
-    pub fn get_balance_address(&self, ctx: &Context, address: &str) -> Result<U256, AppError> {
+    pub fn get_balance_address(&self, ctx: &Context, address: &str) -> Result<U256, BscError> {
         let raw_url_str = format!("https://api.bscscan.com/api?module=account&action=balance&address={target_address}&apikey={api_key}", target_address=address, api_key=ctx.api_key);
 
         let url = Url::parse(&raw_url_str);
         if let Err(_) = url {
-            return Err(AppError::ErrorInternalUrlParsing);
+            return Err(BscError::ErrorInternalUrlParsing);
         }
 
         match isahc::get(url.unwrap().as_str()) {
             Ok(mut res) => {
                 // early return for non-200 HTTP returned code
                 if res.status() != 200 {
-                    return Err(AppError::ErrorApiResponse(format!("Error API resonse, with HTTP {code} returned", code=res.status().as_str())));
+                    return Err(BscError::ErrorApiResponse(format!("Error API resonse, with HTTP {code} returned", code=res.status().as_str())));
                 }
 
                 match res.json::<BSCBnbBalanceResponse>() {
@@ -176,22 +176,22 @@ impl Accounts {
                             match json.result {
                                 GenericBSCBnbBalanceResponseResult::Success(bal) => Ok(bal),
                                 GenericBSCBnbBalanceResponseResult::Failed(result_msg) => {
-                                    return Err(AppError::ErrorApiResponse(format!("un-expected error for success case ({msg})", msg=result_msg)));
+                                    return Err(BscError::ErrorApiResponse(format!("un-expected error for success case ({msg})", msg=result_msg)));
                                 }
                             }
                         }
                         else {
-                            return Err(AppError::ErrorApiResponse(format!("Message:{message}", message=json.message)));
+                            return Err(BscError::ErrorApiResponse(format!("Message:{message}", message=json.message)));
                         }
                     },
                     Err(e) => {
                         eprintln!("{:?}", e);
-                        return Err(AppError::ErrorJsonParsing(None));
+                        return Err(BscError::ErrorJsonParsing(None));
                     }
                 }
             },
             Err(_) => {
-                return Err(AppError::ErrorSendingHttpRequest);
+                return Err(BscError::ErrorSendingHttpRequest);
             }
         }
     }
@@ -207,7 +207,7 @@ impl Accounts {
     /// * `ctx` - context instance
     /// * `address` - target wallet address. It should not be contract address as
     ///               internally it use `address` parameter to make a request.
-    pub fn get_bep20_transfer_events_a(&self, ctx: &Context, address: &str) -> Result<Vec::<BSCBep20TokenTransferEventResponseSuccessVariantResult>, AppError> {
+    pub fn get_bep20_transfer_events_a(&self, ctx: &Context, address: &str) -> Result<Vec::<BSCBep20TokenTransferEventResponseSuccessVariantResult>, BscError> {
         let mut page_number = 1u8;
         let mut is_need_next_page = true;
         const OFFSET: usize = 2000;
@@ -219,14 +219,14 @@ impl Accounts {
 
             let url = Url::parse(&raw_url_str);
             if let Err(_) = url {
-                return Err(AppError::ErrorInternalUrlParsing);
+                return Err(BscError::ErrorInternalUrlParsing);
             }
 
             match isahc::get(url.unwrap().as_str()) {
                 Ok(mut res) => {
                     // early return for non-200 HTTP returned code
                     if res.status() != 200 {
-                        return Err(AppError::ErrorApiResponse(format!("Error API resonse, with HTTP {code} returned", code=res.status().as_str())));
+                        return Err(BscError::ErrorApiResponse(format!("Error API resonse, with HTTP {code} returned", code=res.status().as_str())));
                     }
 
                     match res.json::<BSCBep20TokenTransferEventResponse>() {
@@ -247,7 +247,7 @@ impl Accounts {
                                     },
                                     // this case should not happen
                                     GenericBSCBep20TokenTransferEventResponseResult::Failed(msg) => {
-                                        return Err(AppError::ErrorApiResponse(format!("un-expected error for success case ({msg})", msg=msg)));
+                                        return Err(BscError::ErrorApiResponse(format!("un-expected error for success case ({msg})", msg=msg)));
                                     }
                                 }
                             }
@@ -257,18 +257,18 @@ impl Accounts {
                                     break;
                                 }
                                 else {
-                                    return Err(AppError::ErrorApiResponse(format!("'{message}'", message=json.message)));
+                                    return Err(BscError::ErrorApiResponse(format!("'{message}'", message=json.message)));
                                 }
                             }
                         },
                         Err(e) => {
                             eprintln!("{:?}", e);
-                            return Err(AppError::ErrorJsonParsing(None));
+                            return Err(BscError::ErrorJsonParsing(None));
                         }
                     }
                 },
                 Err(_) => {
-                    return Err(AppError::ErrorSendingHttpRequest);
+                    return Err(BscError::ErrorSendingHttpRequest);
                 }
             }
 

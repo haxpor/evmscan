@@ -7,7 +7,6 @@
  */
 #[cfg(test)]
 mod test {
-    use crate::prelude::*;   // to import lib.rs
     use crate::environ::Context;
     use crate::bscscan;
     use lazy_static::lazy_static;
