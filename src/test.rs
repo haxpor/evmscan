@@ -43,7 +43,7 @@ mod test {
         let ctx = create_context();
 
         // this is "BSC: Token Hub" contract address
-        let _bnb_balance = bscscan::get_balance_address(&ctx, "0x0000000000000000000000000000000000001004").unwrap();
+        let _bnb_balance = bscscan::accounts().get_balance_address(&ctx, "0x0000000000000000000000000000000000001004").unwrap();
     }
 
     // NOTE: only downside here is the time it takes to wait for response
@@ -55,7 +55,7 @@ mod test {
 
         let ctx = create_context();
 
-        let txs = bscscan::get_list_normal_transactions(&ctx, "0x0000000000000000000000000000000000001004").unwrap();
+        let txs = bscscan::accounts().get_list_normal_transactions(&ctx, "0x0000000000000000000000000000000000001004").unwrap();
 
         // as API limits the maximum returns of this type of API to exactly 10000,
         // so we use to assert against it
@@ -72,7 +72,7 @@ mod test {
 
         let ctx = create_context();
 
-        let txs = bscscan::get_list_internal_transactions(&ctx, "0x0000000000000000000000000000000000001004").unwrap();
+        let txs = bscscan::accounts().get_list_internal_transactions(&ctx, "0x0000000000000000000000000000000000001004").unwrap();
         assert!(txs.len() == 10000);
     }
 
@@ -82,7 +82,7 @@ mod test {
 
         let ctx = create_context();
 
-        let res = bscscan::get_bep20_transfer_events_a(&ctx, "0x0000000000000000000000000000000000001004");
+        let res = bscscan::accounts().get_bep20_transfer_events_a(&ctx, "0x0000000000000000000000000000000000001004");
         assert!(res.is_err());      // as we use non-EOA address, it will be error
     }
 }

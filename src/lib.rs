@@ -2,6 +2,7 @@ pub mod types;
 pub mod deserialize;
 pub mod environ;
 pub mod bscscan;
+pub mod api;
 mod impls;
 
 #[cfg(test)]
