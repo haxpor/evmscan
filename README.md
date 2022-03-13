@@ -95,5 +95,10 @@ See which APIs this project supports as seen in checking mark below.
 - [ ] `PRO API` Get daily network utilization
 - [ ] `PRO API` Get daily transaction count
 
+# Test
+
+* Define your bscscan.com's api key via environment variable namely `BSCSCAN_TEST_APIKEY` (this is used for cargo testing only, you don't have to define it to use this library).
+* Execute `cargo test`.
+
 # License
 MIT, Wasin Thonkaew
