@@ -111,13 +111,41 @@ pub struct BSCBnbBalanceResponse {
     pub result: GenericBSCBnbBalanceResponseResult,
 }
 
-/// Generic result for 'result' field of `BSCBnbBalanceResponse`.
+/// Generic result for `result` field of `BSCBnbBalanceResponse`.
 #[derive(Debug, serde::Deserialize)]
 #[serde(untagged)]
 pub enum GenericBSCBnbBalanceResponseResult {
     #[serde(deserialize_with = "de_string_to_U256")]
     Success(U256),
-    Failed(String)
+    Failed(String),
+}
+
+/// Structure that holds balance for multiple addresses query via API
+#[derive(Debug, serde::Deserialize)]
+pub struct BSCBnbBalanceMultiResponse {
+    pub status: String,
+    pub message: String,
+    pub result: GenericBSCBnbBalanceMultiResponseResult,
+}
+
+/// Generic result for `result` field of `BSCBnbBalanceMultiResponse`.
+#[derive(Debug, serde::Deserialize)]
+#[serde(untagged)]
+pub enum GenericBSCBnbBalanceMultiResponseResult {
+    Success(Vec<BSCBnbBalanceMulti>),
+    Failed(String),
+}
+
+/// Structure which hold individual record of Getting BNB balance for multiple
+/// addresses API.
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BSCBnbBalanceMulti {
+    /// Account address
+    pub account: String,
+
+    /// Balance in Wei
+    pub balance: U256,
 }
 
 /// Generic result as returned from `result` field from API response from bscscan.com

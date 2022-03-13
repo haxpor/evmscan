@@ -19,4 +19,7 @@ pub enum Error {
 
     /// Error from Api response back from bscscan.com containing the error message
     ErrorApiResponse(String),
+
+    /// Parameter to function error
+    ErrorParameter(Option<String>),
 }

@@ -196,6 +196,72 @@ impl Accounts {
         }
     }
 
+    /// Get balance from multiple addresses.
+    /// It has internal check and will return `Err` accordingly if length of
+    /// specified `addresses` slice is 0 or more than 20.
+    ///
+    /// It's better to error out instead of process only up to 20 to notify user
+    /// using this function that the input might not be as expected.
+    ///
+    /// # Arguments
+    /// * `ctx` - context instance
+    /// * `addresses` - slice of literal string addresses.
+    pub fn get_balance_addresses_multi(&self, ctx: &Context, addresses: &[&str]) -> Result<Vec<BSCBnbBalanceMulti>, BscError> {
+        let addrs_len = addresses.len();
+
+        if addrs_len == 0 {
+            return Err(BscError::ErrorParameter(Some("'count' needs to be more than 0".to_owned())));
+        }
+        if addrs_len > 20 {
+            return Err(BscError::ErrorParameter(Some("'count' cannot be more than 20".to_owned())));
+        }
+
+        // build string of addresses, up to 20 addresses
+        let mut addresses_str: String = String::new(); 
+        for i in 1..addrs_len {
+            addresses_str.push_str(addresses[i-1]);
+            addresses_str.push(',');
+        }
+        addresses_str.push_str(addresses[addrs_len-1]);
+
+        let raw_url_str = format!("https://api.bscscan.com/api?module=account&action=balancemulti&address={addresses_str}&tag=latest&apikey={api_key}", addresses_str=&addresses_str, api_key=ctx.api_key);
+
+        let url = Url::parse(&raw_url_str);
+        if url.is_err() {
+            return Err(BscError::ErrorInternalUrlParsing);
+        }
+
+        match isahc::get(url.unwrap().as_str()) {
+            Ok(mut res) => {
+                // early return for non-200 HTTP returned code
+                if res.status() != 200 {
+                    return Err(BscError::ErrorApiResponse(format!("Error API resonse, with HTTP {code} returned", code=res.status().as_str())));
+                }
+
+                match res.json::<BSCBnbBalanceMultiResponse>() {
+                    Ok(json) => {
+                        if json.status == "1" {
+                            match json.result {
+                                GenericBSCBnbBalanceMultiResponseResult::Success(bal_records) => Ok(bal_records),
+                                GenericBSCBnbBalanceMultiResponseResult::Failed(result_msg) => Err(BscError::ErrorApiResponse(format!("un-expected error for success case ({msg})", msg=result_msg)))
+                            }
+                        }
+                        else {
+                            return Err(BscError::ErrorApiResponse(format!("Message:{message}", message=json.message)));
+                        }
+                    },
+                    Err(e) => {
+                        eprintln!("{:?}", e);
+                        return Err(BscError::ErrorJsonParsing(None));
+                    }
+                }
+            },
+            Err(_) => {
+                return Err(BscError::ErrorSendingHttpRequest);
+            }
+        }
+    }
+
     /// Get BEP-20 transfer events for `address` API request.
     /// This will return only records of transfer from `address`.
     ///

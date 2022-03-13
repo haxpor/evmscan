@@ -22,6 +22,12 @@ mod test {
         // This will ease and avoid rate-limit problem which is 5 API calls/s
         // as imposed by bscscan.com.
         static ref LOCK: Mutex<i64> = Mutex::new(0);
+
+        // target address which is "BSC: Token Hub"
+        static ref ADDRESS1: &'static str = "0x0000000000000000000000000000000000001004";
+
+        // another target address which is "BSC: Relayer Incentivize"
+        static ref ADDRESS2: &'static str = "0x0000000000000000000000000000000000001005";
     }
 
     /// This function will panic if BSCSCAN_TEST_APIKEY is not defined.
@@ -42,7 +48,17 @@ mod test {
         let ctx = create_context();
 
         // this is "BSC: Token Hub" contract address
-        let _bnb_balance = bscscan::accounts().get_balance_address(&ctx, "0x0000000000000000000000000000000000001004").unwrap();
+        let _bnb_balance = bscscan::accounts().get_balance_address(&ctx, &ADDRESS1).unwrap();
+    }
+
+    #[test]
+    fn test_get_balance_multi() {
+        let _ = LOCK.lock().unwrap();
+
+        let ctx = create_context();
+
+        let txs = bscscan::accounts().get_balance_addresses_multi(&ctx, &[&ADDRESS1, &ADDRESS2]).unwrap();
+        assert!(txs.len() == 2);
     }
 
     // NOTE: only downside here is the time it takes to wait for response
@@ -54,7 +70,7 @@ mod test {
 
         let ctx = create_context();
 
-        let txs = bscscan::accounts().get_list_normal_transactions(&ctx, "0x0000000000000000000000000000000000001004").unwrap();
+        let txs = bscscan::accounts().get_list_normal_transactions(&ctx, &ADDRESS1).unwrap();
 
         // as API limits the maximum returns of this type of API to exactly 10000,
         // so we use to assert against it
@@ -71,7 +87,7 @@ mod test {
 
         let ctx = create_context();
 
-        let txs = bscscan::accounts().get_list_internal_transactions(&ctx, "0x0000000000000000000000000000000000001004").unwrap();
+        let txs = bscscan::accounts().get_list_internal_transactions(&ctx, &ADDRESS1).unwrap();
         assert!(txs.len() == 10000);
     }
 
@@ -81,7 +97,7 @@ mod test {
 
         let ctx = create_context();
 
-        let res = bscscan::accounts().get_bep20_transfer_events_a(&ctx, "0x0000000000000000000000000000000000001004");
+        let res = bscscan::accounts().get_bep20_transfer_events_a(&ctx, &ADDRESS1);
         assert!(res.is_err());      // as we use non-EOA address, it will be error
     }
 }

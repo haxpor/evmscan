@@ -19,6 +19,12 @@ impl std::fmt::Display for BscError {
                 }
             },
             BscError::ErrorApiResponse(ref msg) => write!(f, "Error api response from bscscan.com: {}", msg),
+            BscError::ErrorParameter(ref msg_optional) => {
+                match msg_optional {
+                    Some(msg) => write!(f, "Invalid parameter: {}", msg),
+                    None => write!(f, "Invalid parameter"),
+                }
+            },
         }
     }
 }
