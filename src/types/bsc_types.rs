@@ -145,6 +145,7 @@ pub struct BSCBnbBalanceMulti {
     pub account: String,
 
     /// Balance in Wei
+    #[serde(deserialize_with = "de_string_to_U256")]
     pub balance: U256,
 }
 
