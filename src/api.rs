@@ -2,3 +2,6 @@
 
 /// Accounts API group / namespace
 pub mod accounts;
+
+/// Stats API group / namespace
+pub mod stats;

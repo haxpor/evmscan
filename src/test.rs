@@ -112,4 +112,14 @@ serial_test! {
     }
 }
 
+// TODO: separate this Stats related API into separate test file
+serial_test! {
+    fn test_get_bnb_last_price() {
+        let ctx = create_context();
+
+        match bscscan::stats().get_bnb_last_price(&ctx) {
+            Ok(res) => println!("{:#?}", res),
+            Err(e) => panic!("{:?}:", e)
+        }
+    }
 }

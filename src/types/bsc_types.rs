@@ -280,3 +280,37 @@ pub enum GenericBSCBep20TokenTransferEventResponseResult {
     Success(Vec::<BSCBep20TokenTransferEventResponseSuccessVariantResult>),
     Failed(String)
 }
+
+/// Structure holding response back for Stats API's Get BNB last price
+#[derive(Debug, serde::Deserialize)]
+pub struct BSCBnbLastPriceResponse {
+    pub status: String,
+    pub message: String,
+    pub result: BSCBnbLastPriceResult,
+}
+
+/// Sturcture holding variant response for field 'result' of Stats API's
+/// Get BNB last price.
+#[derive(Debug, serde::Deserialize)]
+#[serde(untagged)]
+pub enum BSCBnbLastPriceResult {
+    Success(BSCBnbLastPrice),
+    Failed(String)
+}
+
+/// Actual structure holding a success response for Stats API's
+/// Get BNB last price.
+#[derive(Debug, serde::Deserialize)]
+pub struct BSCBnbLastPrice {
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub ethbtc: f64,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub ethbtc_timestamp: u64,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub ethusd: f64,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub ethusd_timestamp: u64,
+}

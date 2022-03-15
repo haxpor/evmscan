@@ -7,9 +7,16 @@ use crate::api::*;
 /// FIXME: how to declare this while not using .pow() which is not constant function
 pub static BNB_SCALE_F: f64 = 1_000_000_000_000_000_000_f64;
 
-/// Get APIs in `Accounts` namespace
-/// Users should cache the returned `Accounts` as this function will newly create
-/// such instance every time when called.
+/// Get APIs in `Accounts` namespace.
+/// NOTE: Users should cache the returned `Accounts` as this function will newly create
+/// such instance every time when called although it's cheap.
 pub fn accounts() -> accounts::Accounts {
     accounts::Accounts{}
+}
+
+/// Get APIs in `Stats` namespace.
+/// NOTE: Users should cache the returned `Stats` as this function will newly create
+/// such instance every time when called although it's cheap.
+pub fn stats() -> stats::Stats {
+    stats::Stats{}
 }
