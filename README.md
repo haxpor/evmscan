@@ -10,7 +10,7 @@ See which APIs this project supports as seen in checking mark below.
 ## Accounts
 - [x] Get BNB balance for a single address
 - [x] Get BNB balance for multiple addresses in a single cal
-- [ ] Get historical BNB balance for a single address by block number
+- [ ] `PRO API` Get historical BNB balance for a single address by block number
 - [x] Get a list of normal transactions by address (limited by API to only maximum of 10,000 records)
 - [x] Get a list of internal transactions by address (limited by API to only maximum of 10,000 records)
 - [ ] Get 'internal transactions' by transaction hash
