@@ -88,7 +88,7 @@ See which APIs this project supports as seen in checking mark below.
 
 - [ ] Get total supply of BNB on the BNB Smart Chain
 - [ ] Get validators list on the BNB Smart Chain
-- [ ] Get BNB last price
+- [x] Get BNB last price
 - [ ] `PRO API` Get BNB historical price
 - [ ] `PRO API` Get daily network transaction fee
 - [ ] `PRO API` Get daily new address count
