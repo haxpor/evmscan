@@ -74,12 +74,19 @@ impl Accounts {
             };
             let raw_url_str = format!("https://api.bscscan.com/api?module=account&action={action}&address={target_address}&startblock=0&endblock=99999999&page={page}&offset={offset}&sort=asc&apikey={api_key}", action=action, target_address=address, api_key=ctx.api_key, page=page_number, offset=OFFSET);
 
-            let url = Url::parse(&raw_url_str);
-            if let Err(_) = url {
-                return Err(BscError::ErrorInternalUrlParsing);
-            }
+            let url = match Url::parse(&raw_url_str) {
+                Ok(res) => res,
+                Err(_) => return Err(BscError::ErrorInternalUrlParsing),
+            };
 
-            match isahc::get(url.unwrap().as_str()) {
+            let request = match isahc::Request::get(url.as_str())
+                .version_negotiation(isahc::config::VersionNegotiation::http2())
+                .body(()) {
+                Ok(res) => res,
+                Err(e) => return Err(BscError::ErrorInternalGeneric(Some(format!("Error creating a HTTP request; err={}", e)))),
+            };
+
+            match isahc::send(request) {
                 Ok(mut res) => {
                     // early return for non-200 HTTP returned code
                     if res.status() != 200 {
@@ -158,12 +165,19 @@ impl Accounts {
     pub fn get_balance_address(&self, ctx: &Context, address: &str) -> Result<U256, BscError> {
         let raw_url_str = format!("https://api.bscscan.com/api?module=account&action=balance&address={target_address}&apikey={api_key}", target_address=address, api_key=ctx.api_key);
 
-        let url = Url::parse(&raw_url_str);
-        if let Err(_) = url {
-            return Err(BscError::ErrorInternalUrlParsing);
-        }
+        let url = match Url::parse(&raw_url_str) {
+            Ok(res) => res,
+            Err(_) => return Err(BscError::ErrorInternalUrlParsing),
+        };
 
-        match isahc::get(url.unwrap().as_str()) {
+        let request = match isahc::Request::get(url.as_str())
+            .version_negotiation(isahc::config::VersionNegotiation::http2())
+            .body(()) {
+            Ok(res) => res,
+            Err(e) => return Err(BscError::ErrorInternalGeneric(Some(format!("Error creating a HTTP request; err={}", e)))),
+        };
+
+        match isahc::send(request) {
             Ok(mut res) => {
                 // early return for non-200 HTTP returned code
                 if res.status() != 200 {
@@ -226,12 +240,19 @@ impl Accounts {
 
         let raw_url_str = format!("https://api.bscscan.com/api?module=account&action=balancemulti&address={addresses_str}&tag=latest&apikey={api_key}", addresses_str=&addresses_str, api_key=ctx.api_key);
 
-        let url = Url::parse(&raw_url_str);
-        if url.is_err() {
-            return Err(BscError::ErrorInternalUrlParsing);
-        }
+        let url = match Url::parse(&raw_url_str) {
+            Ok(res) => res,
+            Err(_) => return Err(BscError::ErrorInternalUrlParsing),
+        };
 
-        match isahc::get(url.unwrap().as_str()) {
+        let request = match isahc::Request::get(url.as_str())
+            .version_negotiation(isahc::config::VersionNegotiation::http2())
+            .body(()) {
+            Ok(res) => res,
+            Err(e) => return Err(BscError::ErrorInternalGeneric(Some(format!("Error creating a HTTP request; err={}", e)))),
+        };
+
+        match isahc::send(request) {
             Ok(mut res) => {
                 // early return for non-200 HTTP returned code
                 if res.status() != 200 {
@@ -283,12 +304,19 @@ impl Accounts {
         while is_need_next_page {
             let raw_url_str = format!("https://api.bscscan.com/api?module=account&action=tokentx&address={target_address}&page={page}&offset={offset}&startblock=0&endblock=999999999&sort=asc&apikey={api_key}", target_address=address, page={page_number}, offset=OFFSET, api_key=ctx.api_key);
 
-            let url = Url::parse(&raw_url_str);
-            if let Err(_) = url {
-                return Err(BscError::ErrorInternalUrlParsing);
-            }
+            let url = match Url::parse(&raw_url_str) {
+                Ok(res) => res,
+                Err(_) => return Err(BscError::ErrorInternalUrlParsing),
+            };
 
-            match isahc::get(url.unwrap().as_str()) {
+            let request = match isahc::Request::get(url.as_str())
+                .version_negotiation(isahc::config::VersionNegotiation::http2())
+                .body(()) {
+                Ok(res) => res,
+                Err(e) => return Err(BscError::ErrorInternalGeneric(Some(format!("Error creating a HTTP request; err={}", e)))),
+            };
+
+            match isahc::send(request) {
                 Ok(mut res) => {
                     // early return for non-200 HTTP returned code
                     if res.status() != 200 {

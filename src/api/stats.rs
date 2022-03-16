@@ -20,12 +20,19 @@ impl Stats {
     pub fn get_bnb_last_price(&self, ctx: &Context) -> Result<BSCBnbLastPrice, BscError> {
         let raw_url_str = format!("https://api.bscscan.com/api?module=stats&action=bnbprice&apikey={api_key}", api_key=ctx.api_key);
 
-        let url = Url::parse(&raw_url_str);
-        if url.is_err() {
-            return Err(BscError::ErrorInternalUrlParsing);
-        }
+        let url = match Url::parse(&raw_url_str) {
+            Ok(res) => res,
+            Err(_) => return Err(BscError::ErrorInternalUrlParsing),
+        };
 
-        match isahc::get(url.unwrap().as_str()) {
+        let request = match isahc::Request::get(url.as_str())
+            .version_negotiation(isahc::config::VersionNegotiation::http2())
+            .body(()) {
+            Ok(res) => res,
+            Err(e) => return Err(BscError::ErrorInternalGeneric(Some(format!("Error creating a HTTP request; err={}", e)))),
+        };
+
+        match isahc::send(request) {
             Ok(mut res) => {
                 // early return for non-200 HTTP returned code
                 if res.status() != 200 {
