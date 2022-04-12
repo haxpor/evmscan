@@ -11,7 +11,12 @@ impl std::fmt::Display for BscError {
                 }
             },
             BscError::ErrorInternalUrlParsing => write!(f, "Error internal from parsing Url"),
-            BscError::ErrorSendingHttpRequest => write!(f, "Error in sending HTTP request"),
+            BscError::ErrorSendingHttpRequest(ref msg_opt) => {
+                match msg_opt {
+                    Some(msg) => write!(f, "Error in sending HTTP request; err={}", msg),
+                    None => write!(f, "Error in sending HTTP request"),
+                }
+            },
             BscError::ErrorJsonParsing(ref msg) => {
                 match msg {
                     Some(msg) => write!(f, "Error in parsing JSON string ({})", msg),

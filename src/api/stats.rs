@@ -57,8 +57,9 @@ impl Stats {
                     }
                 }
             },
-            Err(_) => {
-                return Err(BscError::ErrorSendingHttpRequest);
+            Err(e) => {
+                let err_msg = format!("{}", e);
+                return Err(BscError::ErrorSendingHttpRequest(Some(err_msg)));
             }
         }
     }

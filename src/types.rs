@@ -11,7 +11,8 @@ pub enum Error {
     ErrorInternalUrlParsing,
 
     /// Error in sending HTTP request
-    ErrorSendingHttpRequest,
+    /// Contains optional error message
+    ErrorSendingHttpRequest(Option<String>),
 
     /// Error JSON parsing
     /// Contain optional error message
