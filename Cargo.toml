@@ -1,6 +1,6 @@
 [package]
 name = "bscscan"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2021"
 authors = ["Wasin Thonkaew <wasin@wasin.io>"]
 description = "BSC (Binance Smart Chain) non-async API in Rust"
