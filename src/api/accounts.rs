@@ -196,7 +196,23 @@ impl Accounts {
                             }
                         }
                         else {
-                            return Err(BscError::ErrorApiResponse(format!("Message:{message}", message=json.message)));
+                            // safely get text from "result" field
+                            // this will ensure that the type of `json.result` is
+                            // actually GenericBSCBnbBalanceRespnseResult which is
+                            // the failed case.
+                            let result_text = match json.result {
+                                GenericBSCBnbBalanceResponseResult::Failed(txt) => Some(txt),
+                                _ => None,
+                            };
+
+                            match result_text {
+                                Some(txt) => {
+                                    return Err(BscError::ErrorApiResponse(format!("message:{}, result:{}", json.message, txt)));
+                                },
+                                None => {
+                                    return Err(BscError::ErrorApiResponse(format!("message:{}", json.message)));
+                                },
+                            }
                         }
                     },
                     Err(e) => {
@@ -270,7 +286,23 @@ impl Accounts {
                             }
                         }
                         else {
-                            return Err(BscError::ErrorApiResponse(format!("Message:{message}", message=json.message)));
+                            // safely get text from "result" field
+                            // this will ensure that the type of `json.result` is
+                            // actually GenericBSCBnbBalanceRespnseResult which is
+                            // the failed case.
+                            let result_text = match json.result {
+                                GenericBSCBnbBalanceMultiResponseResult::Failed(txt) => Some(txt),
+                                _ => None,
+                            };
+
+                            match result_text {
+                                Some(txt) => {
+                                    return Err(BscError::ErrorApiResponse(format!("message:{}, result:{}", json.message, txt)));
+                                },
+                                None => {
+                                    return Err(BscError::ErrorApiResponse(format!("message:{}", json.message)));
+                                },
+                            }
                         }
                     },
                     Err(e) => {
