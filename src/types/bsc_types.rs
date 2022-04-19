@@ -374,7 +374,7 @@ pub struct BSCContractSourceCode {
     /// Constructor's arguments
     #[serde(deserialize_with = "de_constructor_arguments_string_to_vec_string")]
     #[serde(rename = "ConstructorArguments")]
-    pub contructor_arguments: Vec<String>,
+    pub constructor_arguments: Vec<String>,
 
     /// EVM version
     #[serde(rename = "EVMVersion")]
