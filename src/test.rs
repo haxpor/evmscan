@@ -129,6 +129,11 @@ serial_test! {
     fn test_contracts_get_verified_source_code() {
         let ctx = create_context();
 
+        // **ALERT**: be vigilant in interact with the contract address as specified
+        // to `get_verified_source_code()` function.
+        // See
+        // https://twitter.com/ElephantStatus/status/1514007291116199936?s=20&t=DG6H-xMda1fai4Lo1ngcHQ
+        // Because it's not that easy to find a contract with constructor arguments.
         match bscscan::contracts().get_verified_source_code(&ctx, "0xe283d0e3b8c102badf5e8166b73e02d96d92f688") {
             Err(e) => panic!("{:?}", e),
             Ok(res) => println!("{:?}", res),
