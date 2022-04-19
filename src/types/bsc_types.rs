@@ -318,6 +318,47 @@ pub struct BSCBnbLastPrice {
     pub ethusd_timestamp: u64,
 }
 
+/// Contract ABI
+#[derive(Debug, serde::Deserialize)]
+pub struct BSCContractABIResponse {
+    pub status: String,
+    pub message: String,
+    pub result: String,
+}
+
+/// Actual structure holding individual contract ABI.
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct BSCContractABIItem {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub anonymous: Option<bool>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub inputs: Option<Vec<BSCContractABIItemType>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub outputs: Option<Vec<BSCContractABIItemType>>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state_mutability: Option<String>,
+
+    pub r#type: String
+}
+
+/// Type definition for each ABI item
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct BSCContractABIItemType {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub indexed: Option<bool>,
+    pub internal_type: String,
+    pub name: String,
+    pub r#type: String,
+}
+
 /// Contract source code response
 #[derive(Debug, serde::Deserialize)]
 pub struct BSCContractSourceCodeResponse {

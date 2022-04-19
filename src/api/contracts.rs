@@ -9,6 +9,76 @@ use url::Url;
 pub struct Contracts;
 
 impl Contracts {
+    /// Get contract ABI.
+    ///
+    /// # Arguments
+    /// * `ctx` - Context
+    /// * `address` - contract address to get ABI
+    /// * `is_pretty_print` - whether or not to pretty print
+    pub fn get_abi(self, ctx: &Context, address: &str, is_pretty_print: bool) -> Result<String, BscError> {
+        let raw_url_str = format!("https://api.bscscan.com/api?module=contract&action=getabi&address={address}&apikey={api_key}", address=address, api_key=ctx.api_key);
+
+        let url = match Url::parse(&raw_url_str) {
+            Ok(res) => res,
+            Err(_) => return Err(BscError::ErrorInternalUrlParsing),
+        };
+
+        let request = match isahc::Request::get(url.as_str())
+            .version_negotiation(isahc::config::VersionNegotiation::http2())
+            .body(()) {
+            Ok(res) => res,
+            Err(e) => return Err(BscError::ErrorInternalGeneric(Some(format!("Error creating a HTTP request; err={}", e)))),
+        };
+
+        match isahc::send(request) {
+            Ok(mut res) => {
+                // early return for non-200 HTTP returned code
+                if res.status() != 200 {
+                    return Err(BscError::ErrorApiResponse(format!("Error API response, with HTTP {code} returned", code=res.status().as_str())));
+                }
+
+                match res.json::<BSCContractABIResponse>() {
+                    Ok(json) => {
+                        if json.status == "1" {
+                            // clean the text e.g. \
+                            let cleaned_res = str::replace(&json.result, "\\", "");
+
+                            if is_pretty_print {
+                                // deserialize json string into object
+                                // in order to pretty print it later
+                                match serde_json::from_str::<Vec<BSCContractABIItem>>(&cleaned_res) {
+                                    Ok(json_obj) => {
+                                        match serde_json::to_string_pretty(&json_obj) {
+                                            Ok(pretty_json_string) => Ok(pretty_json_string),
+                                            Err(e) => return Err(BscError::ErrorInternalGeneric(Some(format!("create pretty JSON string from JSON object; err={}", e)))),
+                                        }
+                                    },
+                                    Err(e) => {
+                                        return Err(BscError::ErrorInternalGeneric(Some(format!("create JSON object from string; err={}", e))));
+                                    },
+                                }
+                            }
+                            else {
+                                Ok(cleaned_res)
+                            }
+                        }
+                        else {
+                            return Err(BscError::ErrorApiResponse(format!("message:{}", json.message)));
+                        }
+                    },
+                    Err(e) => {
+                        eprintln!("{:?}", e);
+                        return Err(BscError::ErrorJsonParsing(None));
+                    }
+                }
+            },
+            Err(e) => {
+                let err_msg = format!("{}", e);
+                return Err(BscError::ErrorSendingHttpRequest(Some(err_msg)));
+            }
+        }
+    }
+
     /// Get verified contract's source code from the specified address.
     ///
     /// # Arguments

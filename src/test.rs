@@ -126,17 +126,51 @@ serial_test! {
 
 // TODO: separate this Contracts related API into seperate test file
 serial_test! {
+    fn test_contracts_get_abi_with_no_pretty_print() {
+        let ctx = create_context();
+
+        let res = bscscan::contracts().get_abi(&ctx, &ADDRESS1, false);
+        assert!(res.is_ok());
+        assert!(res.unwrap().len() == 11842);   // exact number of character
+                                                // from cleaned '\' char
+    }
+}
+
+serial_test! {
+    fn test_contracts_get_abi_with_pretty_print() {
+        let ctx = create_context();
+
+        let res = bscscan::contracts().get_abi(&ctx, &ADDRESS1, true);
+        assert!(res.is_ok());
+        assert!(res.unwrap().len() > 11842);
+    }
+}
+
+serial_test! {
     fn test_contracts_get_verified_source_code() {
         let ctx = create_context();
 
-        // **ALERT**: be vigilant in interact with the contract address as specified
-        // to `get_verified_source_code()` function.
-        // See
-        // https://twitter.com/ElephantStatus/status/1514007291116199936?s=20&t=DG6H-xMda1fai4Lo1ngcHQ
-        // Because it's not that easy to find a contract with constructor arguments.
-        match bscscan::contracts().get_verified_source_code(&ctx, "0xe283d0e3b8c102badf5e8166b73e02d96d92f688") {
+        match bscscan::contracts().get_verified_source_code(&ctx, "0x1bA8D3C4c219B124d351F603060663BD1bcd9bbF") {
             Err(e) => panic!("{:?}", e),
-            Ok(res) => println!("{:?}", res),
+            Ok(res) => {
+                assert!(res.len() > 0);
+                assert_eq!(res[0].constructor_arguments.len(), 5);
+                assert_eq!(res[0].constructor_arguments[0], "000000000000000000000000ba5fe23f8a3a24bed3236f05f2fcf35fd0bf0b5c");
+                assert_eq!(res[0].constructor_arguments[1], "000000000000000000000000Ee9546E92e6876EdF6a234eFFbD72d75360d91f0");
+                assert_eq!(res[0].constructor_arguments[2], "0000000000000000000000000000000000000000000000000000000000000060");
+                assert_eq!(res[0].constructor_arguments[3], "0000000000000000000000000000000000000000000000000000000000000000");
+                assert_eq!(res[0].constructor_arguments[4], "0000000000000000000000000000000000000000000000000000000000000000");
+
+                assert_eq!(res[0].optimization_used, true);
+                assert_eq!(res[0].compiler_version, "v0.6.4+commit.1dca32f3");
+                assert_eq!(res[0].runs, 200);
+                assert_eq!(res[0].contract_name, "BEP20UpgradeableProxy");
+                assert_eq!(res[0].evm_version, "Default");
+                assert_eq!(res[0].license_type, "Apache-2.0");
+                assert_eq!(res[0].proxy, true);
+                assert_eq!(res[0].implementation, "0xba5fe23f8a3a24bed3236f05f2fcf35fd0bf0b5c");
+                assert_eq!(res[0].swarm_source, "ipfs://647a4fea61bb23cbda141d2cf5cadbd9ec022ccc2ffffaaa1b59b91259cfb8a1");
+            }
         }
     }
 }
