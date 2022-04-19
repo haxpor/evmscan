@@ -12,7 +12,15 @@ impl Contracts {
     /// Get verified contract's source code from the specified address.
     ///
     /// # Arguments
-    /// *
+    /// * `ctx` - Context
+    /// * `address` - contract address to get verified source code
+    ///
+    /// # Result
+    /// Return `Vec<BSCContractSourceCode>` for success case, but mostly you just
+    /// need to access the first item. It won't be the case of empty in returned
+    /// `Vec`. This is due to the way API returned back. Even with mutiple source
+    /// files uploaded and verified but it will altogether combined into one
+    /// long string of code. But in the future, thing may be changed.
     pub fn get_verified_source_code(self, ctx: &Context, address: &str) -> Result<Vec<BSCContractSourceCode>, BscError> {
         let raw_url_str = format!("https://api.bscscan.com/api?module=contract&action=getsourcecode&address={address}&apikey={api_key}", address=address, api_key=ctx.api_key);
 
