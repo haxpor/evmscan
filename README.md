@@ -25,8 +25,8 @@ See which APIs this project supports as seen in checking mark below.
 
 ## Contracts
 
-- [ ] Get contract ABI for verified contract source code
-- [ ] Get contract source code for verified contract source codes
+- [x] Get contract ABI for verified contract source code
+- [x] Get contract source code for verified contract source codes
 - [ ] Verify source code
 - [ ] Verify proxy contract
 
