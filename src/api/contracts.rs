@@ -117,7 +117,7 @@ impl Contracts {
                     Ok(json) => {
                         if json.status == "1" {
                             match json.result {
-                                BSCContractSourceCodeResult::Success(contracts) => {
+                                BSCContractSourceCodeResult::Success(mut contracts) => {
                                     if contracts.is_empty() {
                                         return Err(BscError::ErrorApiResponse(format!("source code is empty")));
                                     }
@@ -141,6 +141,14 @@ impl Contracts {
                                         return Err(BscError::ErrorApiResponse(format!("made query to un-verified contract source code")));
                                     }
                                     else {
+                                        // Clean the text e.g. \ for its abi and code
+                                        // the same way as contract ABI API would do.
+                                        // With that, the output string is ready
+                                        // to be piped and viewed by text editor
+                                        // in which newlines will be taken into effect.
+                                        contracts[0].abi = str::replace(&contracts[0].abi, "\\", "");
+                                        contracts[0].source_code = str::replace(&contracts[0].source_code, "\\", "");
+
                                         return Ok(contracts);
                                     }
                                 },
