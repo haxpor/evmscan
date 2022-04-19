@@ -20,3 +20,10 @@ pub fn accounts() -> accounts::Accounts {
 pub fn stats() -> stats::Stats {
     stats::Stats{}
 }
+
+/// Get Contracts in `Contracts` namespace.
+/// NOTE: Users should cache the returned `Contracts` as this function will newly
+/// create such instance every time called although it's cheap.
+pub fn contracts() -> contracts::Contracts {
+    contracts::Contracts{}
+}

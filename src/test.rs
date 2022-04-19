@@ -123,3 +123,15 @@ serial_test! {
         }
     }
 }
+
+// TODO: separate this Contracts related API into seperate test file
+serial_test! {
+    fn test_contracts_get_verified_source_code() {
+        let ctx = create_context();
+
+        match bscscan::contracts().get_verified_source_code(&ctx, "0xe283d0e3b8c102badf5e8166b73e02d96d92f688") {
+            Err(e) => panic!("{:?}", e),
+            Ok(res) => println!("{:?}", res),
+        }
+    }
+}

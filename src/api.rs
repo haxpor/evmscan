@@ -5,3 +5,6 @@ pub mod accounts;
 
 /// Stats API group / namespace
 pub mod stats;
+
+/// Contracts API group / namespace
+pub mod contracts;

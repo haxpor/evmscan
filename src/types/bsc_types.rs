@@ -1,5 +1,8 @@
 use crate::prelude::*;
-use crate::deserialize::{de_string_to_numeric, de_string_to_U256, de_string_to_bool};
+use crate::deserialize::{de_string_to_numeric,
+                         de_string_to_U256,
+                         de_string_to_bool,
+                         de_constructor_arguments_string_to_vec_string};
 
 /// Type of bscscan.com's API request
 pub enum BSCApiResponseType {
@@ -313,4 +316,92 @@ pub struct BSCBnbLastPrice {
 
     #[serde(deserialize_with = "de_string_to_numeric")]
     pub ethusd_timestamp: u64,
+}
+
+/// Contract source code response
+#[derive(Debug, serde::Deserialize)]
+pub struct BSCContractSourceCodeResponse {
+    pub status: String,
+    pub message: String,
+    pub result: BSCContractSourceCodeResult,
+}
+
+/// Structure holding variant response fro field `reuslt` of Contracts's
+/// getting contract code API.
+#[derive(Debug, serde::Deserialize)]
+#[serde(untagged)]
+pub enum BSCContractSourceCodeResult {
+    Success(Vec<BSCContractSourceCode>),
+
+    /// This also includes the case of querying for non-verified source code.
+    /// Although it is not error / failed case per-se as its `abi` field will
+    /// contain exactly "Contract source code not verified". But it is included
+    /// as failed case as well.
+    Failed(String),
+}
+
+/// Actual structure holding contract's verified source code
+/// If such contract doesn't verify source code, then most fields will be empty.
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BSCContractSourceCode {
+    /// Actual smart contract source code
+    #[serde(rename = "SourceCode")]
+    pub source_code: String,
+
+    /// Contract ABI
+    #[serde(rename = "ABI")]
+    pub abi: String,
+
+    /// Contract name
+    #[serde(rename = "ContractName")]
+    pub contract_name: String,
+
+    /// Compiler version
+    #[serde(rename = "CompilerVersion")]
+    pub compiler_version: String,
+
+    /// Whether or not optimization has been applied
+    #[serde(deserialize_with = "de_string_to_bool")]
+    #[serde(rename = "OptimizationUsed")]
+    pub optimization_used: bool,
+
+    /// Number of runs as part of optimization
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    #[serde(rename = "Runs")]
+    pub runs: u32,
+
+    /// Constructor's arguments
+    #[serde(deserialize_with = "de_constructor_arguments_string_to_vec_string")]
+    #[serde(rename = "ConstructorArguments")]
+    pub contructor_arguments: Vec<String>,
+
+    /// EVM version
+    #[serde(rename = "EVMVersion")]
+    pub evm_version: String,
+
+    /// Library used by this constract
+    /// FIXME: For now, returned as a whole as string, we need to find an example of
+    /// contract which contains non-empty of this field.
+    #[serde(rename = "Library")]
+    pub library: String,
+
+    /// License type
+    #[serde(rename = "LicenseType")]
+    pub license_type: String,
+
+    /// Whether or not this contract is the proxy, if so then `implementation`
+    /// field contains the actual implementation address.
+    #[serde(deserialize_with = "de_string_to_bool")]
+    #[serde(rename = "Proxy")]
+    pub proxy: bool,
+
+    /// Contract address that is the implementation for this contract as it is
+    /// acting as a proxy.
+    #[serde(rename = "Implementation")]
+    pub implementation: String,
+
+    /// URL to swarm source
+    #[serde(rename = "SwarmSource")]
+    pub swarm_source: String,
 }
