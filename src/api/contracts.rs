@@ -4,6 +4,7 @@ use crate::environ::Context;
 
 use isahc::prelude::*;
 use url::Url;
+use regex::Regex;
 
 /// Contracts namespace containing related APIs about contracts
 pub struct Contracts;
@@ -79,6 +80,20 @@ impl Contracts {
         }
     }
 
+    /// Check whether the content of text is in json format.
+    /// See
+    /// https://docs.soliditylang.org/en/v0.5.8/using-the-compiler.html#compiler-input-and-output-json-description
+    ///
+    /// With that we need to
+    ///
+    /// # Arguments
+    /// * `text` - text to check
+    fn is_content_in_json_format(text: &str) -> bool {
+        let lower_cased_text = text.to_lowercase();
+        let regex: Regex = Regex::new(r#".*"language":\s*"solidity".*"#).unwrap();
+        regex.is_match(&lower_cased_text)
+    }
+
     /// Get verified contract's source code from the specified address.
     ///
     /// # Arguments
@@ -86,12 +101,19 @@ impl Contracts {
     /// * `address` - contract address to get verified source code
     ///
     /// # Result
-    /// Return `Vec<BSCContractSourceCode>` for success case, but mostly you just
-    /// need to access the first item. It won't be the case of empty in returned
-    /// `Vec`. This is due to the way API returned back. Even with mutiple source
+    /// Return a tuple of `(Vec<BSCContractSourceCode>, bool)` for success case.
+    ///
+    /// * If second part is `true`, then it means vector might have more than 1 items
+    /// to represent the number of files. But it will have 1 + N ; wheres N is
+    /// the number of files. The first item of vector will always be the raw
+    /// combined altogether of all files the same as `false` case of second part.
+    ///
+    /// * If second part is `false`, then user just need to focus on the first item
+    /// of the vector as the source code is combined altogether in there.
+    /// This is due to the way API returned back. Even with mutiple source
     /// files uploaded and verified but it will altogether combined into one
-    /// long string of code. But in the future, thing may be changed.
-    pub fn get_verified_source_code(self, ctx: &Context, address: &str) -> Result<Vec<BSCContractSourceCode>, BscError> {
+    /// long string of code.
+    pub fn get_verified_source_code(self, ctx: &Context, address: &str) -> Result<(Vec<BSCContractSourceCode>, bool), BscError> {
         let raw_url_str = format!("https://api.bscscan.com/api?module=contract&action=getsourcecode&address={address}&apikey={api_key}", address=address, api_key=ctx.api_key);
 
         let url = match Url::parse(&raw_url_str) {
@@ -122,6 +144,39 @@ impl Contracts {
                                         return Err(BscError::ErrorApiResponse(format!("source code is empty")));
                                     }
 
+                                    // there can be a chance that source code is in
+                                    // json format. It allows clear multiple source
+                                    // files that we can better utilize and return
+                                    // as such instead of combined it altogether.
+                                    //
+                                    // with this way, we will replace the items
+                                    // as held by contracts to what we will find
+                                    // from multiple files here
+                                    let mut additional_vec: Vec<BSCContractSourceCode> = Vec::new();    // create a new addtional vector just to avoid borrow issue
+                                                                                                        // within the loop
+                                    if Contracts::is_content_in_json_format(&contracts[0].source_code) {
+                                        let regex = Regex::new(r#""(.+)":\s*\{\s*.*?"content":\s*"(.+)""#).unwrap();
+                                        for cap in regex.captures_iter(&contracts[0].source_code) {
+                                            additional_vec.push(BSCContractSourceCode {
+                                                source_code: cap[2].to_owned(),
+                                                abi: contracts[0].abi.clone(),
+                                                contract_name: cap[1].to_owned(),
+                                                compiler_version: contracts[0].compiler_version.clone(),
+                                                optimization_used: contracts[0].optimization_used.clone(),
+                                                runs: contracts[0].runs.clone(),
+                                                constructor_arguments: contracts[0].constructor_arguments.clone(),
+                                                evm_version: contracts[0].evm_version.clone(),
+                                                library: contracts[0].library.clone(),
+                                                license_type: contracts[0].license_type.clone(),
+                                                proxy: contracts[0].proxy.clone(),
+                                                implementation: contracts[0].implementation.clone(),
+                                                swarm_source: contracts[0].swarm_source.clone(),
+                                            });
+                                        }
+                                        contracts.append(&mut additional_vec);
+                                        return Ok((contracts, true));
+                                    }
+
                                     // also check whether we made query for un-verified source code
                                     // in which response back from server still
                                     // has `status` field as "1". We need to check
@@ -149,7 +204,7 @@ impl Contracts {
                                         contracts[0].abi = str::replace(&contracts[0].abi, "\\", "");
                                         contracts[0].source_code = str::replace(&contracts[0].source_code, "\\", "");
 
-                                        return Ok(contracts);
+                                        return Ok((contracts, false));
                                     }
                                 },
                                 BSCContractSourceCodeResult::Failed(result_msg) => {

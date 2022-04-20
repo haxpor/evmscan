@@ -153,23 +153,68 @@ serial_test! {
         match bscscan::contracts().get_verified_source_code(&ctx, "0x1bA8D3C4c219B124d351F603060663BD1bcd9bbF") {
             Err(e) => panic!("{:?}", e),
             Ok(res) => {
-                assert!(res.len() > 0);
-                assert_eq!(res[0].constructor_arguments.len(), 5);
-                assert_eq!(res[0].constructor_arguments[0], "000000000000000000000000ba5fe23f8a3a24bed3236f05f2fcf35fd0bf0b5c");
-                assert_eq!(res[0].constructor_arguments[1], "000000000000000000000000Ee9546E92e6876EdF6a234eFFbD72d75360d91f0");
-                assert_eq!(res[0].constructor_arguments[2], "0000000000000000000000000000000000000000000000000000000000000060");
-                assert_eq!(res[0].constructor_arguments[3], "0000000000000000000000000000000000000000000000000000000000000000");
-                assert_eq!(res[0].constructor_arguments[4], "0000000000000000000000000000000000000000000000000000000000000000");
+                assert!(res.0.len() > 0);
+                assert_eq!(res.1, false);       // not submitted as JSON format
 
-                assert_eq!(res[0].optimization_used, true);
-                assert_eq!(res[0].compiler_version, "v0.6.4+commit.1dca32f3");
-                assert_eq!(res[0].runs, 200);
-                assert_eq!(res[0].contract_name, "BEP20UpgradeableProxy");
-                assert_eq!(res[0].evm_version, "Default");
-                assert_eq!(res[0].license_type, "Apache-2.0");
-                assert_eq!(res[0].proxy, true);
-                assert_eq!(res[0].implementation, "0xba5fe23f8a3a24bed3236f05f2fcf35fd0bf0b5c");
-                assert_eq!(res[0].swarm_source, "ipfs://647a4fea61bb23cbda141d2cf5cadbd9ec022ccc2ffffaaa1b59b91259cfb8a1");
+                assert_eq!(res.0[0].constructor_arguments.len(), 5);
+                assert_eq!(res.0[0].constructor_arguments[0], "000000000000000000000000ba5fe23f8a3a24bed3236f05f2fcf35fd0bf0b5c");
+                assert_eq!(res.0[0].constructor_arguments[1], "000000000000000000000000Ee9546E92e6876EdF6a234eFFbD72d75360d91f0");
+                assert_eq!(res.0[0].constructor_arguments[2], "0000000000000000000000000000000000000000000000000000000000000060");
+                assert_eq!(res.0[0].constructor_arguments[3], "0000000000000000000000000000000000000000000000000000000000000000");
+                assert_eq!(res.0[0].constructor_arguments[4], "0000000000000000000000000000000000000000000000000000000000000000");
+
+                assert_eq!(res.0[0].optimization_used, true);
+                assert_eq!(res.0[0].compiler_version, "v0.6.4+commit.1dca32f3");
+                assert_eq!(res.0[0].runs, 200);
+                assert_eq!(res.0[0].contract_name, "BEP20UpgradeableProxy");
+                assert_eq!(res.0[0].evm_version, "Default");
+                assert_eq!(res.0[0].license_type, "Apache-2.0");
+                assert_eq!(res.0[0].proxy, true);
+                assert_eq!(res.0[0].implementation, "0xba5fe23f8a3a24bed3236f05f2fcf35fd0bf0b5c");
+                assert_eq!(res.0[0].swarm_source, "ipfs://647a4fea61bb23cbda141d2cf5cadbd9ec022ccc2ffffaaa1b59b91259cfb8a1");
+            }
+        }
+    }
+}
+
+serial_test! {
+    // The verification step can be in json format
+    // https://docs.soliditylang.org/en/v0.5.8/using-the-compiler.html#compiler-input-and-output-json-description
+    // thus it can contain multiple files with the optional of settings.
+    fn test_contracts_get_verified_source_code_json_format() {
+        let ctx = create_context();
+
+        // ALERT: this address we used has been attacked due to vulnerability in the migrate()
+        // function (gymdefi) as reported by BlockSec
+        // https://twitter.com/BlockSecTeam/status/1512832398643265537?s=20&t=n5hETJrbgTAANKTpiwiMeg.
+        //
+        // Such address is used in our test as it's not relatively easy to find
+        // such contract that has submitted as part of code verification onto bscscan
+        // that used JSON format which allows multiple files to be there.
+        //
+        // So be vigilant, and careful not to interact with such contract address.
+        match bscscan::contracts().get_verified_source_code(&ctx, "0x1befe6f3f0e8edd2d4d15cae97baee01e51ea4a4")         {
+            Err(e) => panic!("{}", e),
+            Ok(res) => {
+                assert_eq!(res.0.len(), 7);     // 1 + 6 (1 is raw combined altogether, and 6 is other files there as part of JSON format)
+
+                assert_eq!(res.1, true);    // this is submitted as JSON format, so it's true
+
+                assert_eq!(res.0[0].constructor_arguments.len(), 0);
+                assert_eq!(res.0[0].compiler_version, "v0.8.12+commit.f00d7308");
+                assert_eq!(res.0[0].runs, 200);
+                assert_eq!(res.0[0].evm_version, "Default");
+                assert_eq!(res.0[0].license_type, "");
+                assert_eq!(res.0[0].proxy, false);
+                assert_eq!(res.0[0].implementation, "");
+                assert_eq!(res.0[0].swarm_source, "");
+
+                assert_eq!(res.0[1].contract_name, "contracts/LpMigration.sol");
+                assert_eq!(res.0[2].contract_name, "@openzeppelin/contracts/access/Ownable.sol");
+                assert_eq!(res.0[3].contract_name, "@openzeppelin/contracts/utils/Context.sol");
+                assert_eq!(res.0[4].contract_name, "@openzeppelin/contracts/utils/math/SafeMath.sol");
+                assert_eq!(res.0[5].contract_name, "@openzeppelin/contracts/security/ReentrancyGuard.sol");
+                assert_eq!(res.0[6].contract_name, "@openzeppelin/contracts/token/ERC20/IERC20.sol");
             }
         }
     }

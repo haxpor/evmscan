@@ -18,6 +18,7 @@ url = "2.2.2"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 primitive-types = { version = "0.11.1", features = ["impl-serde", "fp-conversion"] }
+regex = "1.5.5"
 
 [dev-dependencies]
 lazy_static = "1.4.0"
