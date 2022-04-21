@@ -10,6 +10,26 @@ use regex::Regex;
 pub struct Contracts;
 
 impl Contracts {
+    /// Check whether the content of text is in json format.
+    /// See
+    /// https://docs.soliditylang.org/en/v0.5.8/using-the-compiler.html#compiler-input-and-output-json-description
+    ///
+    /// With that we need to
+    ///
+    /// # Arguments
+    /// * `text` - text to check
+    fn is_content_in_json_format(text: &str) -> bool {
+        let lower_cased_text = text.to_lowercase();
+        let regex: Regex = Regex::new(r#".*"language":\s*"solidity".*"#).unwrap();
+        regex.is_match(&lower_cased_text)
+    }
+
+    /// Replace literal CRLF characters into ASCII code represent CR and LF
+    /// individually
+    fn replace_literal_crlf_with_char_codes(text: &str) -> String {
+        str::replace(&str::replace(text, "\\n", "\n"), "\\r", "\r")
+    }
+
     /// Get contract ABI.
     ///
     /// # Arguments
@@ -42,7 +62,8 @@ impl Contracts {
                     Ok(json) => {
                         if json.status == "1" {
                             // clean the text e.g. \
-                            let cleaned_res = str::replace(&json.result, "\\", "");
+                            let mut cleaned_res = Contracts::replace_literal_crlf_with_char_codes(&json.result);
+                            cleaned_res = str::replace(&cleaned_res, "\\", "");
 
                             if is_pretty_print {
                                 // deserialize json string into object
@@ -78,20 +99,6 @@ impl Contracts {
                 return Err(BscError::ErrorSendingHttpRequest(Some(err_msg)));
             }
         }
-    }
-
-    /// Check whether the content of text is in json format.
-    /// See
-    /// https://docs.soliditylang.org/en/v0.5.8/using-the-compiler.html#compiler-input-and-output-json-description
-    ///
-    /// With that we need to
-    ///
-    /// # Arguments
-    /// * `text` - text to check
-    fn is_content_in_json_format(text: &str) -> bool {
-        let lower_cased_text = text.to_lowercase();
-        let regex: Regex = Regex::new(r#".*"language":\s*"solidity".*"#).unwrap();
-        regex.is_match(&lower_cased_text)
     }
 
     /// Get verified contract's source code from the specified address.
@@ -144,6 +151,18 @@ impl Contracts {
                                         return Err(BscError::ErrorApiResponse(format!("source code is empty")));
                                     }
 
+                                    // this one is not that necessary for ABI, but
+                                    // it happens for code. So ensure it's clean
+                                    // as well for ABI.
+                                    contracts[0].abi = Contracts::replace_literal_crlf_with_char_codes(&contracts[0].abi);
+                                    // Clean the text e.g. \ for its abi and code
+                                    // the same way as contract ABI API would do.
+                                    // With that, the output string is ready
+                                    // to be piped and viewed by text editor
+                                    // in which newlines will be taken into effect.
+                                    // NOTE: do this after CR/LF cleaning
+                                    contracts[0].abi = str::replace(&contracts[0].abi, "\\", "");
+
                                     // there can be a chance that source code is in
                                     // json format. It allows clear multiple source
                                     // files that we can better utilize and return
@@ -157,8 +176,13 @@ impl Contracts {
                                     if Contracts::is_content_in_json_format(&contracts[0].source_code) {
                                         let regex = Regex::new(r#""(.+)":\s*\{\s*.*?"content":\s*"(.+)""#).unwrap();
                                         for cap in regex.captures_iter(&contracts[0].source_code) {
+                                            // NOTE: do this in order to not interfere
+                                            // with CR/LF cleaning
+                                            let mut cleaned_contract_code = Contracts::replace_literal_crlf_with_char_codes(&cap[2]);
+                                            cleaned_contract_code = str::replace(&cleaned_contract_code, "\\", "");
+
                                             additional_vec.push(BSCContractSourceCode {
-                                                source_code: cap[2].to_owned(),
+                                                source_code: cleaned_contract_code,
                                                 abi: contracts[0].abi.clone(),
                                                 contract_name: cap[1].to_owned(),
                                                 compiler_version: contracts[0].compiler_version.clone(),
@@ -196,12 +220,9 @@ impl Contracts {
                                         return Err(BscError::ErrorApiResponse(format!("made query to un-verified contract source code")));
                                     }
                                     else {
-                                        // Clean the text e.g. \ for its abi and code
-                                        // the same way as contract ABI API would do.
-                                        // With that, the output string is ready
-                                        // to be piped and viewed by text editor
-                                        // in which newlines will be taken into effect.
-                                        contracts[0].abi = str::replace(&contracts[0].abi, "\\", "");
+                                        // NOTE: do this in order to not interfere
+                                        // with CR/LF cleaning
+                                        contracts[0].source_code = Contracts::replace_literal_crlf_with_char_codes(&contracts[0].source_code);
                                         contracts[0].source_code = str::replace(&contracts[0].source_code, "\\", "");
 
                                         return Ok((contracts, false));
