@@ -4,8 +4,8 @@ use crate::deserialize::{de_string_to_numeric,
                          de_string_to_bool,
                          de_constructor_arguments_string_to_vec_string};
 
-/// Type of bscscan.com's API request
-pub enum BSCApiResponseType {
+/// Type of upstream server's API request
+pub enum EvmApiResponseType {
     NormalTransaction,
     InternalTransaction
 }
@@ -15,7 +15,7 @@ pub enum BSCApiResponseType {
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]  // source JSON response is in camelCase except
                                     // 'txreceipt_status' which we explicitly `rename` it.
-pub struct BSCNormalTransactionResponseSuccessVariantResult {
+pub struct EvmNormalTransactionResponseSuccessVariantResult {
     #[serde(deserialize_with = "de_string_to_numeric")]
     pub block_number: u64,
 
@@ -68,7 +68,7 @@ pub struct BSCNormalTransactionResponseSuccessVariantResult {
 /// of internal transaction
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct BSCInternalTransactionResponseSuccessVariantResult {
+pub struct EvmInternalTransactionResponseSuccessVariantResult {
     #[serde(deserialize_with = "de_string_to_numeric")]
     pub block_number: u64,
 
@@ -108,16 +108,16 @@ pub struct BSCInternalTransactionResponseSuccessVariantResult {
 
 /// Structure that holds account balance
 #[derive(Debug, serde::Deserialize)]
-pub struct BSCBnbBalanceResponse {
+pub struct EvmNativeTokenBalanceResponse {
     pub status: String,
     pub message: String,
-    pub result: GenericBSCBnbBalanceResponseResult,
+    pub result: GenericEvmNativeTokenBalanceResponseResult,
 }
 
-/// Generic result for `result` field of `BSCBnbBalanceResponse`.
+/// Generic result for `result` field of `EvmNativeTokenBalanceResponse`.
 #[derive(Debug, serde::Deserialize)]
 #[serde(untagged)]
-pub enum GenericBSCBnbBalanceResponseResult {
+pub enum GenericEvmNativeTokenBalanceResponseResult {
     #[serde(deserialize_with = "de_string_to_U256")]
     Success(U256),
     Failed(String),
@@ -125,25 +125,25 @@ pub enum GenericBSCBnbBalanceResponseResult {
 
 /// Structure that holds balance for multiple addresses query via API
 #[derive(Debug, serde::Deserialize)]
-pub struct BSCBnbBalanceMultiResponse {
+pub struct EvmNativeTokenBalanceMultiResponse {
     pub status: String,
     pub message: String,
-    pub result: GenericBSCBnbBalanceMultiResponseResult,
+    pub result: GenericEvmNativeTokenBalanceMultiResponseResult,
 }
 
-/// Generic result for `result` field of `BSCBnbBalanceMultiResponse`.
+/// Generic result for `result` field of `EvmNativeTokenBalanceMultiResponse`.
 #[derive(Debug, serde::Deserialize)]
 #[serde(untagged)]
-pub enum GenericBSCBnbBalanceMultiResponseResult {
-    Success(Vec<BSCBnbBalanceMulti>),
+pub enum GenericEvmNativeTokenBalanceMultiResponseResult {
+    Success(Vec<EvmNativeTokenBalanceMulti>),
     Failed(String),
 }
 
-/// Structure which hold individual record of Getting BNB balance for multiple
+/// Structure which hold individual record of Getting native token balance for multiple
 /// addresses API.
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct BSCBnbBalanceMulti {
+pub struct EvmNativeTokenBalanceMulti {
     /// Account address
     pub account: String,
 
@@ -155,17 +155,17 @@ pub struct BSCBnbBalanceMulti {
 /// Generic result as returned from `result` field from API response from bscscan.com
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(untagged)]
-pub enum GenericBSCTransactionResponseResult<T> {
+pub enum GenericEvmTransactionResponseResult<T> {
     Success(Vec::<T>),
     Failed(Option<String>)
 }
 
 /// Common structure which has shared fields for API response from bscscan.com.
 #[derive(Debug, serde::Deserialize)]
-pub struct BSCTransactionResponse<T> {
+pub struct EvmTransactionResponse<T> {
     pub status: String,
     pub message: String,
-    pub result: GenericBSCTransactionResponseResult::<T>,
+    pub result: GenericEvmTransactionResponseResult::<T>,
 }
 
 /// Trait to satisfy implementing generic handling function for multiple API response
@@ -173,12 +173,12 @@ pub struct BSCTransactionResponse<T> {
 pub trait CompatibleTransactionResponse<T> {
     fn status(&self) -> &str;
     fn message(&self) -> &str;
-    fn result(&self) -> GenericBSCTransactionResponseResult::<T>;
+    fn result(&self) -> GenericEvmTransactionResponseResult::<T>;
 }
 
 /// Implementation of `CompatibleTransactionResponse` for
-/// `BSCNormalTransactionResponseSuccessVariantResult`.
-impl CompatibleTransactionResponse<BSCNormalTransactionResponseSuccessVariantResult> for BSCTransactionResponse<BSCNormalTransactionResponseSuccessVariantResult>
+/// `EvmNormalTransactionResponseSuccessVariantResult`.
+impl CompatibleTransactionResponse<EvmNormalTransactionResponseSuccessVariantResult> for EvmTransactionResponse<EvmNormalTransactionResponseSuccessVariantResult>
 {
     fn status(&self) -> &str {
         &self.status
@@ -188,14 +188,14 @@ impl CompatibleTransactionResponse<BSCNormalTransactionResponseSuccessVariantRes
         &self.message
     }
 
-    fn result(&self) -> GenericBSCTransactionResponseResult::<BSCNormalTransactionResponseSuccessVariantResult> {
+    fn result(&self) -> GenericEvmTransactionResponseResult::<EvmNormalTransactionResponseSuccessVariantResult> {
         self.result.clone()
     }
 }
 
 /// Implementation of `CompatibleTransactionResponse` for
-/// `BSCInternalTransactionResponseSuccessVariantResult`.
-impl CompatibleTransactionResponse<BSCInternalTransactionResponseSuccessVariantResult> for BSCTransactionResponse<BSCInternalTransactionResponseSuccessVariantResult>
+/// `EvmInternalTransactionResponseSuccessVariantResult`.
+impl CompatibleTransactionResponse<EvmInternalTransactionResponseSuccessVariantResult> for EvmTransactionResponse<EvmInternalTransactionResponseSuccessVariantResult>
 {
     fn status(&self) -> &str {
         &self.status
@@ -205,16 +205,16 @@ impl CompatibleTransactionResponse<BSCInternalTransactionResponseSuccessVariantR
         &self.message
     }
 
-    fn result(&self) -> GenericBSCTransactionResponseResult::<BSCInternalTransactionResponseSuccessVariantResult> {
+    fn result(&self) -> GenericEvmTransactionResponseResult::<EvmInternalTransactionResponseSuccessVariantResult> {
         self.result.clone()
     }
 }
 
-/// Structure holding returne API response of `result` field for BEP-20 tokens
+/// Structure holding returne API response of `result` field for ERC-20/BEP-20 tokens
 /// transfer events
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct BSCBep20TokenTransferEventResponseSuccessVariantResult {
+pub struct EvmErc20TokenTransferEventResponseSuccessVariantResult {
     #[serde(deserialize_with = "de_string_to_numeric")]
     pub block_number: u64,
 
@@ -266,45 +266,55 @@ pub struct BSCBep20TokenTransferEventResponseSuccessVariantResult {
     pub confirmations: u32,
 }
 
-/// Structure holding information returned from API response for BEP-20 token
+/// Structure holding information returned from API response for ERC-20/BEP-20 token
 /// transfer event.
 #[derive(Debug, serde::Deserialize)]
-pub struct BSCBep20TokenTransferEventResponse {
+pub struct EvmErc20TokenTransferEventResponse {
     pub status: String,
     pub message: String,
-    pub result: GenericBSCBep20TokenTransferEventResponseResult,
+    pub result: GenericEvmErc20TokenTransferEventResponseResult,
 }
 
 /// Structure holding variant of either success or failed returned for `result`
-/// field of API response for BEP-20 token transfer event.
+/// field of API response for Erc-20/BEP-20 token transfer event.
 #[derive(Debug, serde::Deserialize)]
 #[serde(untagged)]
-pub enum GenericBSCBep20TokenTransferEventResponseResult {
-    Success(Vec::<BSCBep20TokenTransferEventResponseSuccessVariantResult>),
+pub enum GenericEvmErc20TokenTransferEventResponseResult {
+    Success(Vec::<EvmErc20TokenTransferEventResponseSuccessVariantResult>),
     Failed(String)
 }
 
-/// Structure holding response back for Stats API's Get BNB last price
+/// Structure holding response back for Stats API's Get native token last price
 #[derive(Debug, serde::Deserialize)]
-pub struct BSCBnbLastPriceResponse {
+pub struct EvmNativeTokenLastPriceResponse {
     pub status: String,
     pub message: String,
-    pub result: BSCBnbLastPriceResult,
+    pub result: EvmNativeTokenLastPriceResult,
 }
 
 /// Sturcture holding variant response for field 'result' of Stats API's
-/// Get BNB last price.
+/// Get native token's last price.
 #[derive(Debug, serde::Deserialize)]
 #[serde(untagged)]
-pub enum BSCBnbLastPriceResult {
-    Success(BSCBnbLastPrice),
+pub enum EvmNativeTokenLastPriceResult {
+    /// Success case for main returning value of last price result.
+    /// `EvmNativeTokanLastPrice_Polygon` will be mapped into this structure
+    /// when querying last price on Polygon chain. That will be handled automatically
+    /// and internally.
+    Success(EvmNativeTokenLastPrice),
+
+    /// Success case when querying for the price on Polygon chain. This is
+    /// used internally only amidst can be accessed publicly.
+    #[allow(non_camel_case_types)]
+    Success_Polygon(EvmNativeTokenLastPrice_Polygon),
+
     Failed(String)
 }
 
 /// Actual structure holding a success response for Stats API's
-/// Get BNB last price.
+/// Get native token's last price.
 #[derive(Debug, serde::Deserialize)]
-pub struct BSCBnbLastPrice {
+pub struct EvmNativeTokenLastPrice {
     #[serde(deserialize_with = "de_string_to_numeric")]
     pub ethbtc: f64,
 
@@ -318,9 +328,35 @@ pub struct BSCBnbLastPrice {
     pub ethusd_timestamp: u64,
 }
 
+/// Actual structure holding a success response for Stats API's
+/// Get native token's last price for Polygon chain only.
+///
+/// NOTE: This is due to field names of response of this structure is not unique
+/// compared to BSC, and Ethereum case. This library will internally handle
+/// this unique case and reroute the data into main structure which is
+/// `EvmNativeTokenLastPrice` structure in order to make it consistent in API.
+///
+/// NOTE2: Although accessiblity of this structure is public, but normally
+/// users won't directly use this. It is used internally.
+#[derive(Debug, serde::Deserialize)]
+#[allow(non_camel_case_types)]
+pub struct EvmNativeTokenLastPrice_Polygon {
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub maticbtc: f64,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub maticbtc_timestamp: u64,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub maticusd: f64,
+
+    #[serde(deserialize_with = "de_string_to_numeric")]
+    pub maticusd_timestamp: u64,
+}
+
 /// Contract ABI
 #[derive(Debug, serde::Deserialize)]
-pub struct BSCContractABIResponse {
+pub struct EvmContractABIResponse {
     pub status: String,
     pub message: String,
     pub result: String,
@@ -329,18 +365,18 @@ pub struct BSCContractABIResponse {
 /// Actual structure holding individual contract ABI.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct BSCContractABIItem {
+pub(crate) struct EvmContractABIItem {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub anonymous: Option<bool>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub inputs: Option<Vec<BSCContractABIItemType>>,
+    pub inputs: Option<Vec<EvmContractABIItemType>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub outputs: Option<Vec<BSCContractABIItemType>>,
+    pub outputs: Option<Vec<EvmContractABIItemType>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub state_mutability: Option<String>,
@@ -351,28 +387,29 @@ pub(crate) struct BSCContractABIItem {
 /// Type definition for each ABI item
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct BSCContractABIItemType {
+pub(crate) struct EvmContractABIItemType {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub indexed: Option<bool>,
-    pub internal_type: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub internal_type: Option<String>,
     pub name: String,
     pub r#type: String,
 }
 
 /// Contract source code response
 #[derive(Debug, serde::Deserialize)]
-pub struct BSCContractSourceCodeResponse {
+pub struct EvmContractSourceCodeResponse {
     pub status: String,
     pub message: String,
-    pub result: BSCContractSourceCodeResult,
+    pub result: EvmContractSourceCodeResult,
 }
 
 /// Structure holding variant response fro field `reuslt` of Contracts's
 /// getting contract code API.
 #[derive(Debug, serde::Deserialize)]
 #[serde(untagged)]
-pub enum BSCContractSourceCodeResult {
-    Success(Vec<BSCContractSourceCode>),
+pub enum EvmContractSourceCodeResult {
+    Success(Vec<EvmContractSourceCode>),
 
     /// This also includes the case of querying for non-verified source code.
     /// Although it is not error / failed case per-se as its `abi` field will
@@ -385,7 +422,7 @@ pub enum BSCContractSourceCodeResult {
 /// If such contract doesn't verify source code, then most fields will be empty.
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct BSCContractSourceCode {
+pub struct EvmContractSourceCode {
     /// Actual smart contract source code
     #[serde(rename = "SourceCode")]
     pub source_code: String,

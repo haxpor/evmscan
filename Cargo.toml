@@ -1,14 +1,14 @@
 [package]
-name = "bscscan"
+name = "evmscan"
 version = "0.5.1"
 edition = "2021"
 authors = ["Wasin Thonkaew <wasin@wasin.io>"]
-description = "BSC (Binance Smart Chain) non-async API in Rust"
+description = "Rust binding of non-async API for EVM-based chains which provided by team behinds etherscan.io, bscscan.com, and polygonscan.com"
 license = "MIT"
-keywords = ["blockchain", "crypto", "bsc", "bscscan", "binance"]
+keywords = ["offchain", "api", "polygonscan", "bscscan", "etherscan"]
 categories = ["api-bindings"]
 readme = "README.md"
-repository = "https://github.com/haxpor/bscscan"
+repository = "https://github.com/haxpor/evmscan"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
