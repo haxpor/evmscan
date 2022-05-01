@@ -1,13 +1,15 @@
 /**
  * Note that test module needs bscscan.com's API key in which it needs to be
- * defined via environment variable namedly BSCSCAN_TEST_APIKEY.
+ * defined via environment variable namely 'EVMSCAN_TEST_BSCSCAN_APIKEY'.
  *
- * FIXME: be careful to run these tests as logic code to respect rate-limit
- * is not yet implemented.
+ * NOTE: Logic code in these tests adhere to rate-limit by using serial_test! with
+ * guard lock to test individual API method call which respects free tier rate-limit
+ * internally.
  */
 #[cfg(test)]
+use crate::prelude::*;
 use crate::environ::Context;
-use crate::bscscan;
+use crate::evmscan;
 use lazy_static::lazy_static;
 use std::env;
 use std::sync::Mutex;
@@ -37,40 +39,31 @@ macro_rules! serial_test {
     (fn $name: ident() $body: block) => {
         #[test]
         fn $name() {
-            // NOTE: don't use `let _ = ...` as this will get lock immediately
-            // `drop` thus unlock immediately.
+            // NOTE: don't use `let _ = ...` as this will get unlocked (drop) immediately.
             let _guard = LOCK.lock().unwrap();
-
             $body
         }
     };
 }
 
-/// This function will panic if BSCSCAN_TEST_APIKEY is not defined.
+/// This function will panic if EVMSCAN_TEST_BSCSCAN_APIKEY is not defined.
 fn get_api_key_or_panic() -> String {
-    env::var("BSCSCAN_TEST_APIKEY").expect("Error: define 'BSCSCAN_TEST_APIKEY' environment variable for testing")
-}
-
-fn create_context() -> Context {
-    Context {
-        api_key: get_api_key_or_panic()
-    }
+    env::var("EVMSCAN_TEST_BSCSCAN_APIKEY").expect("Error: define 'EVMSCAN_TEST_BSCSCAN_APIKEY' environment variable for testing")
 }
 
 serial_test! {
     fn test_get_balance() {
-        let ctx = create_context();
+        let ctx = Context::create(ChainType::BSC, get_api_key_or_panic());
 
-        // this is "BSC: Token Hub" contract address
-        let _bnb_balance = bscscan::accounts().get_balance_address(&ctx, &ADDRESS1).unwrap();
+        let _bnb_balance = evmscan::accounts().get_balance_address(&ctx, &ADDRESS1).unwrap();
     }
 }
 
 serial_test! {
     fn test_get_balance_multi() {
-        let ctx = create_context();
+        let ctx = Context::create(ChainType::BSC, get_api_key_or_panic());
 
-        let txs = bscscan::accounts().get_balance_addresses_multi(&ctx, &[&ADDRESS1, &ADDRESS2]).unwrap();
+        let txs = evmscan::accounts().get_balance_addresses_multi(&ctx, &[&ADDRESS1, &ADDRESS2]).unwrap();
         assert!(txs.len() == 2);
     }
 }
@@ -80,9 +73,9 @@ serial_test! {
 // API can return.
 serial_test! {
     fn test_get_list_normal_txs() {
-        let ctx = create_context();
+        let ctx = Context::create(ChainType::BSC, get_api_key_or_panic());
 
-        let txs = bscscan::accounts().get_list_normal_transactions(&ctx, &ADDRESS1).unwrap();
+        let txs = evmscan::accounts().get_list_normal_transactions(&ctx, &ADDRESS1).unwrap();
 
         // as API limits the maximum returns of this type of API to exactly 10000,
         // so we use to assert against it
@@ -96,28 +89,19 @@ serial_test! {
 // max of 10000 records.
 serial_test! {
     fn test_get_list_internal_txs() {
-        let ctx = create_context();
+        let ctx = Context::create(ChainType::BSC, get_api_key_or_panic());
 
-        let txs = bscscan::accounts().get_list_internal_transactions(&ctx, &ADDRESS1).unwrap();
+        let txs = evmscan::accounts().get_list_internal_transactions(&ctx, &ADDRESS1).unwrap();
         assert!(txs.len() == 10000);
-    }
-}
-
-serial_test! {
-    fn test_get_bep20_transfer_events() {
-        let ctx = create_context();
-
-        let res = bscscan::accounts().get_bep20_transfer_events_a(&ctx, &ADDRESS1);
-        assert!(res.is_err());      // as we use non-EOA address, it will be error
     }
 }
 
 // TODO: separate this Stats related API into separate test file
 serial_test! {
-    fn test_get_bnb_last_price() {
-        let ctx = create_context();
+    fn test_get_native_token_last_price() {
+        let ctx = Context::create(ChainType::BSC, get_api_key_or_panic());
 
-        match bscscan::stats().get_bnb_last_price(&ctx) {
+        match evmscan::stats().get_native_token_last_price(&ctx) {
             Ok(res) => println!("{:#?}", res),
             Err(e) => panic!("{:?}:", e)
         }
@@ -127,9 +111,9 @@ serial_test! {
 // TODO: separate this Contracts related API into seperate test file
 serial_test! {
     fn test_contracts_get_abi_with_no_pretty_print() {
-        let ctx = create_context();
+        let ctx = Context::create(ChainType::BSC, get_api_key_or_panic());
 
-        let res = bscscan::contracts().get_abi(&ctx, &ADDRESS1, false);
+        let res = evmscan::contracts().get_abi(&ctx, &ADDRESS1, false);
         assert!(res.is_ok());
         assert!(res.unwrap().len() == 11842);   // exact number of character
                                                 // from cleaned '\' char
@@ -138,9 +122,9 @@ serial_test! {
 
 serial_test! {
     fn test_contracts_get_abi_with_pretty_print() {
-        let ctx = create_context();
+        let ctx = Context::create(ChainType::BSC, get_api_key_or_panic());
 
-        let res = bscscan::contracts().get_abi(&ctx, &ADDRESS1, true);
+        let res = evmscan::contracts().get_abi(&ctx, &ADDRESS1, true);
         assert!(res.is_ok());
         assert!(res.unwrap().len() > 11842);
     }
@@ -148,9 +132,9 @@ serial_test! {
 
 serial_test! {
     fn test_contracts_get_verified_source_code() {
-        let ctx = create_context();
+        let ctx = Context::create(ChainType::BSC, get_api_key_or_panic());
 
-        match bscscan::contracts().get_verified_source_code(&ctx, "0x1bA8D3C4c219B124d351F603060663BD1bcd9bbF") {
+        match evmscan::contracts().get_verified_source_code(&ctx, "0x1bA8D3C4c219B124d351F603060663BD1bcd9bbF") {
             Err(e) => panic!("{:?}", e),
             Ok(res) => {
                 assert!(res.0.len() > 0);
@@ -182,7 +166,7 @@ serial_test! {
     // https://docs.soliditylang.org/en/v0.5.8/using-the-compiler.html#compiler-input-and-output-json-description
     // thus it can contain multiple files with the optional of settings.
     fn test_contracts_get_verified_source_code_json_format() {
-        let ctx = create_context();
+        let ctx = Context::create(ChainType::BSC, get_api_key_or_panic());
 
         // ALERT: this address we used has been attacked due to vulnerability in the migrate()
         // function (gymdefi) as reported by BlockSec
@@ -193,7 +177,7 @@ serial_test! {
         // that used JSON format which allows multiple files to be there.
         //
         // So be vigilant, and careful not to interact with such contract address.
-        match bscscan::contracts().get_verified_source_code(&ctx, "0x1befe6f3f0e8edd2d4d15cae97baee01e51ea4a4")         {
+        match evmscan::contracts().get_verified_source_code(&ctx, "0x1befe6f3f0e8edd2d4d15cae97baee01e51ea4a4")         {
             Err(e) => panic!("{}", e),
             Ok(res) => {
                 assert_eq!(res.0.len(), 7);     // 1 + 6 (1 is raw combined altogether, and 6 is other files there as part of JSON format)

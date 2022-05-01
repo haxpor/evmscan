@@ -1,4 +1,4 @@
-pub mod bsc_types;
+pub mod evm_types;
 
 /// List of possible error as occurs from the operations
 #[derive(Debug)]
@@ -18,9 +18,22 @@ pub enum Error {
     /// Contain optional error message
     ErrorJsonParsing(Option<String>),
 
-    /// Error from Api response back from bscscan.com containing the error message
+    /// Error from Api response back from upstream API server containing the error message
     ErrorApiResponse(String),
 
     /// Parameter to function error
     ErrorParameter(Option<String>),
+}
+
+/// Chain type
+#[derive(Copy, Clone)]
+pub enum ChainType {
+    /// Binance Smart Chain
+    BSC,
+
+    /// Ethereum
+    Ethereum,
+
+    /// Polygon
+    Polygon,
 }
