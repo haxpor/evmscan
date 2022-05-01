@@ -1,6 +1,6 @@
 [package]
 name = "evmscan"
-version = "0.5.1"
+version = "0.6.0"
 edition = "2021"
 authors = ["Wasin Thonkaew <wasin@wasin.io>"]
 description = "Rust binding of non-async API for EVM-based chains which provided by team behinds etherscan.io, bscscan.com, and polygonscan.com"
